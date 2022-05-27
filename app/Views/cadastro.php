@@ -7,11 +7,29 @@
     <title>Banco</title>
 </head>
 <body>
-    <h1>Cadastro Ha ha</h1>
-    <form action="/" method="post">
-        <input type="text" name="nome" placeholder="Nome">
-        <input type="password" name="senha" placeholder="Senha">
-        <input type="submit" value='Envia'>
+    <?php
+    if (isset($_GET['login']) && $_GET['login'] || isset($login) && $login) {
+        if (isset($error)) {
+            echo $error;
+        }
+    echo    "<h1>Login Ha ha</h1>";
+    echo    "<form action='/?login=true' method='post'>
+        <input type='text' name='nome' placeholder='Nome'>
+        <input type='password' name='senha' placeholder='Senha'>
+        <input type='submit' value='Envia'>
     </form>
+    <a href='/'>Cadastre-se!</a>";
+    } else {
+        if (isset($error)) {
+            echo $error;
+        }
+        echo    "<form action='/' method='post'>";
+        echo    "<h1>Cadastro Ha ha</h1>";
+        echo   "<input type='text' name='nome' placeholder='Nome'>
+        <input type='password' name='senha' placeholder='Senha'>
+        <input type='submit' value='Envia'>
+    </form>
+    <a href='/?login=true'>Faça login!!</a>";
+    }?>
 </body>
 </html>

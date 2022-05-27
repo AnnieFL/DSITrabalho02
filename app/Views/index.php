@@ -9,8 +9,13 @@
 <body>
     <h1>index Ha ha</h1>
     <?php
-        echo $user;
+        echo $user['nome'];
     ?>
+    <br>
+    <a href="/extratos">Extratos</a>
+    <a href="/poupanca">Poupanca</a>
+    <a href="/pagar">Pagar</a>
+    <a href="/transferir">Transferir</a>
     <a href="/logout">Logout</a>
 </body>
 </html>

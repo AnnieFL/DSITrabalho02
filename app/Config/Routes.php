@@ -33,8 +33,15 @@ $routes->setAutoRoute(true);
 // route since we don't have to scan directories.
 $routes->get('/', 'Home::index');
 $routes->get('/logout', 'Home::logout');
+$routes->get('/extratos', 'Home::extratos');
+$routes->get('/pagar', 'Home::pagamentos');
+$routes->get('/transferir', 'Home::transferencias');
+$routes->get('/poupanca', 'Home::poupanca');
+$routes->get('/receber', 'Home::receber');
 
 $routes->post('/', 'Home::cadastrar');
+$routes->post('/pagar', 'Home::pagar');
+$routes->post('/transferir', 'Home::transferir');
 
 /*
  * --------------------------------------------------------------------

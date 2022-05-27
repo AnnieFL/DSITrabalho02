@@ -2,6 +2,7 @@
 namespace App\Controllers;
 use App\Models\usuarioModel;
 use App\Models\extratoModel;
+use App\Models\poupancaModel;
 
 class Home extends BaseController
 {
@@ -25,14 +26,23 @@ class Home extends BaseController
     public function cadastrar()
     {
         $Usuario = new UsuarioModel();
+        $Poupanca = new PoupancaModel();
         if (isset($_GET['login']) && $_GET['login']) {
 
             $data = $Usuario->getDataName($_POST['nome']);
             if (isset($data['senha']) && password_verify($_POST['senha'], $data['senha'])) {
                 date_default_timezone_set('America/Sao_Paulo'); 
+
+                $year = date('Y', strtotime($data['dataLogin']));
+                
                 $data['dataLogin'] = date("Y-m-d H:i:s", time());
                 $data['dataLogout'] = date("Y-m-d H:i:s", strtotime("+10 minutes"));
                 
+                $diff = date('Y', strtotime($data['dataLogin'])) > $year; 
+                if ($diff > 0) {
+                    $Poupanca->applyTax($data['numero'], $diff);
+                }
+
                 $Usuario->updateLogin($data);
             } else {
                 $data['error'] = "Nome ou senha incorretos, tente novamente!";
@@ -50,6 +60,11 @@ class Home extends BaseController
                 $data['dataLogout'] = date("Y-m-d H:i:s", strtotime("+10 minutes"));
                 
                 $Usuario->insert($data);
+
+                $data2['usuario'] = $data['numero'];
+                $data2['valor'] = 0;
+                
+                $Poupanca->insert($data2);
             } else {
                 $data['error'] = "Nome em uso, tente novamente!";
                 $data['login'] = false;
@@ -70,6 +85,7 @@ class Home extends BaseController
         $data['dataLogin'] = date("Y-m-d H:i:s", time());
         $data['dataLogout'] = date("Y-m-d H:i:s", strtotime("+10 minutes"));
         $Usuario->updateLogin($data);
+
     
 
         session()->set('user', null);
@@ -89,6 +105,17 @@ class Home extends BaseController
         $data['user'] = $Usuario->getData(session()->get('user'));
 
         return view('pagamentos',$data);
+    }
+
+    public function detalhar($id) {
+        $Extrato = new ExtratoModel();
+
+        $data['extrato'] = $Extrato->getData($id);
+        if ($data['extrato']['usuario'] == session()->get('user')) {
+            return view('detalha', $data);
+        } else {
+            return redirect('/');
+        }
     }
 
     public function pagar() {
@@ -158,5 +185,31 @@ class Home extends BaseController
         return redirect('/');
     }
 
+    public function poupanca() {
+        $Usuario = new UsuarioModel();
+        $Poupanca = new PoupancaModel();
+        
+        $data['user'] = $Usuario->getData(session()->get('user'));
+        
+        $data['poupanca'] = $Poupanca->getDataUser($data['user']['numero']);
+        $data['poupanca'] = $data['poupanca'][0];
+
+        return view('poupanca', $data);
+    }
+
+    public function depositar() {
+        $Usuario = new UsuarioModel();
+        $Poupanca = new PoupancaModel();
+        
+        if (isset($_POST['sacar']) && $_POST['sacar']) {
+            $Usuario->alterValue(session()->get('user'), $_POST['valor']);
+            $Poupanca->alterValue(session()->get('user'), -1*$_POST['valor']);
+        } else {
+            $Poupanca->alterValue(session()->get('user'), $_POST['valor']);
+            $Usuario->alterValue(session()->get('user'), -1*$_POST['valor']);
+        }
+
+        return redirect('/');
+    }
     
 }

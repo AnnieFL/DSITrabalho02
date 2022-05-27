@@ -20,10 +20,11 @@
             <option value="Boleto">Boleto</option>
         </select><br>
         <input type="text" name='destino' placeholder='Destino' required><br>
-        <input type="number" name='valor' placeholder='R$0,00' min='0' <?php echo "max =".$user['valor']?>' required><br>
+        <input type="number" name='valor' placeholder='R$0,00' min='0' <?php echo "max =".$user['valor']?> required><br>
         <textarea name="descricao" cols="25" rows="5" placeholder='Descrição' style="resize: none;" required></textarea><br>
         <input type="hidden" name='usuario' <?php echo "value='".$user['numero']."'" ?>>
         <input type="submit">
     </form>
+    <a href="/">< Voltar</a>
 </body>
 </html>

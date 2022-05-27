@@ -13,7 +13,7 @@ class extratoModel extends Model {
         if ($id == null){
             return $this->findAll();
         }
-        return $this->asArray()->where(['numero' => $id])->first();
+        return $this->asArray()->where(['id' => $id])->first();
     }
 
     public function getDataUser($user) {

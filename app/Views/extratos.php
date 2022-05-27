@@ -13,14 +13,12 @@
             echo "<table><tr>";
             echo "<td>Tipo</td>";
             echo "<td>Valor</td>";
-            echo "<td>Descricao</td>";
             echo "<td>Data e Hora</td>";
             echo "</tr>";
             for ($i=0; $i<count($extratos); $i++) {
                 echo "<tr>";
-                echo "<td>".$extratos[$i]['tipo']."</td>";
+                echo "<td><a href='/extrato/".$extratos[$i]['id']."'>".$extratos[$i]['tipo']."</a></td>";
                 echo "<td>".$extratos[$i]['valor']."</td>";
-                echo "<td>".$extratos[$i]['descricao']."</td>";
                 echo "<td>".$extratos[$i]['data']."</td>";
                 echo "</tr>";
             }

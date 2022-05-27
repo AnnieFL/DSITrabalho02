@@ -6,14 +6,14 @@ use CodeIgniter\Model;
 class usuarioModel extends Model {
 
     protected $table = 'usuario';
-    protected $primarykey = 'numero';
-    protected $allowedFields = ['nome', 'senha','valor', 'dataLogin', 'dataLogout'];
+    protected $primarykey = 'id';
+    protected $allowedFields = ['numero', 'nome', 'senha','valor', 'dataLogin', 'dataLogout'];
 
-    public function getData($id = null){
-        if ($id == null){
+    public function getData($numero = null){
+        if ($numero == null){
             return $this->findAll();
         }
-        return $this->asArray()->where(['numero' => $id])->first();
+        return $this->asArray()->where(['numero' => $numero])->first();
     }
 
     public function getDataName($name){
@@ -24,7 +24,7 @@ class usuarioModel extends Model {
         $this->set('dataLogin', $data['dataLogin']);
         $this->set('dataLogout', $data['dataLogout']);
         $this->where('numero', $data['numero']);
-        $this->update();
+        return $this->update();
     }
 
     public function pagar($pagante, $valor, $pago = null) {
@@ -41,6 +41,15 @@ class usuarioModel extends Model {
 
         $this->set('valor', $result['valor']);
         $this->where('numero', $pagante);
+        return $this->update();
+    }
+
+    public function alterValue($usuario, $valor) {
+        $data = $this->asArray()->where(['numero' => $usuario])->first();
+
+        $valor = $data['valor'] + $valor;
+        $this->set('valor', $valor);
+        $this->where('numero', $usuario);
         return $this->update();
     }
 

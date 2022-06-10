@@ -3,6 +3,7 @@ namespace App\Controllers;
 use App\Models\usuarioModel;
 use App\Models\extratoModel;
 use App\Models\poupancaModel;
+use App\Models\auditoriaModel;
 
 class Home extends BaseController
 {
@@ -27,6 +28,7 @@ class Home extends BaseController
     {
         $Usuario = new UsuarioModel();
         $Poupanca = new PoupancaModel();
+        $Auditoria = new AuditoriaModel();
         if (isset($_GET['login']) && $_GET['login']) {
 
             $data = $Usuario->getDataName($_POST['nome']);
@@ -43,15 +45,29 @@ class Home extends BaseController
                     $Poupanca->applyTax($data['numero'], $diff);
                 }
 
+                $data2['usuario'] = $data['numero'];
+                $data2['data'] = $data['dataLogin'];
+                $data2['tipo'] = "login";
+                
                 $Usuario->updateLogin($data);
+                $Auditoria->insert($data2);
             } else {
-                $data['error'] = "Nome ou senha incorretos, tente novamente!";
+                session()->setFlashdata('error', "Nome ou senha incorretos, tente novamente!");
                 $data['login'] = true;
                 return view('cadastro', $data);
             }
         } else {
             if ($Usuario->getDataName($_POST['nome']) == []) {
+                if ($_POST['nome'] == "" || $_POST['senha'] == "") {
+                    session()->setFlashdata('error', "Por favor, preencha todos os campos!");
+                    $data['login'] = false;
+                    return view('cadastro', $data);
+                }
                 $data['numero'] = rand(10000000,99999999);
+                while ($Usuario->getData($data['numero']) != null) {
+                    $data['numero'] = rand(10000000,99999999);
+                }
+
                 $data['nome'] = $_POST['nome'];
                 $data['senha'] = password_hash($_POST['senha'], PASSWORD_DEFAULT);
                 date_default_timezone_set('America/Sao_Paulo'); 
@@ -66,7 +82,7 @@ class Home extends BaseController
                 
                 $Poupanca->insert($data2);
             } else {
-                $data['error'] = "Nome em uso, tente novamente!";
+                session()->setFlashdata('error', "Nome em uso, tente novamente!");
                 $data['login'] = false;
                 return view('cadastro', $data);
             }
@@ -80,13 +96,19 @@ class Home extends BaseController
     public function logout()
     {
         $Usuario = new UsuarioModel();
+        $Auditoria = new AuditoriaModel();
         $data = $Usuario->getData(session()->get('user'));
+
+        
         date_default_timezone_set('America/Sao_Paulo'); 
-        $data['dataLogin'] = date("Y-m-d H:i:s", time());
-        $data['dataLogout'] = date("Y-m-d H:i:s", strtotime("+10 minutes"));
+        $data['dataLogout'] = date("Y-m-d H:i:s", time());
         $Usuario->updateLogin($data);
 
+        $data2['usuario'] = $data['numero'];
+        $data2['data'] = $data['dataLogout'];
+        $data2['tipo'] = "logout";
     
+        $Auditoria->insert($data2);
 
         session()->set('user', null);
         return redirect('/');
@@ -94,6 +116,12 @@ class Home extends BaseController
 
     public function extratos() 
     {
+        $user = session()->get('user');
+        if (!$user) {
+            session()->setFlashData('error', "Cadastre-se primeiro!");
+            $data['cadastro'] = false;
+            return view('cadastro', $data);
+        }
         $Extrato = new ExtratoModel();
         $data['extratos'] = $Extrato->getDataUser(session()->get('user'));
 
@@ -101,6 +129,12 @@ class Home extends BaseController
     }
 
     public function pagamentos() {
+        $user = session()->get('user');
+        if (!$user) {
+            session()->setFlashData('error', "Cadastre-se primeiro!");
+            $data['cadastro'] = false;
+            return view('cadastro', $data);
+        }
         $Usuario = new UsuarioModel();
         $data['user'] = $Usuario->getData(session()->get('user'));
 
@@ -108,6 +142,12 @@ class Home extends BaseController
     }
 
     public function detalhar($id) {
+        $user = session()->get('user');
+        if (!$user) {
+            session()->setFlashData('error', "Cadastre-se primeiro!");
+            $data['cadastro'] = false;
+            return view('cadastro', $data);
+        }
         $Extrato = new ExtratoModel();
 
         $data['extrato'] = $Extrato->getData($id);
@@ -119,15 +159,29 @@ class Home extends BaseController
     }
 
     public function pagar() {
+        $user = session()->get('user');
+        if (!$user) {
+            session()->setFlashData('error', "Cadastre-se primeiro!");
+            $data['cadastro'] = false;
+            return view('cadastro', $data);
+        }
+
+        
         $data = $_POST;
         date_default_timezone_set('America/Sao_Paulo'); 
         $data['data'] = date("Y-m-d H:i:s", time());
-
+        
         $Usuario = new UsuarioModel();
         $Extrato = new ExtratoModel();
+        
+        $ValorUsuario = $Usuario->getData(session()->get('user'));
+        if ($_POST['valor'] > $ValorUsuario['valor']) {
+            session()->setFlashData('error', "Saldo inválido");
+            return redirect('/');       
+        }
 
         $pago = $Usuario->getData($data['destino']);
-        if ($pago != []) {
+        if ($pago != null) {
             $pagante = $Usuario->getData($data['usuario']);
             
             $data2 = $_POST;
@@ -140,8 +194,6 @@ class Home extends BaseController
             $Extrato->insert($data2);
             
             $pago = $pago['numero'];
-        } else {
-            $pago = null;
         }
         $Usuario->pagar($data['usuario'], $data['valor'], $pago);
 
@@ -151,6 +203,13 @@ class Home extends BaseController
     }
 
     public function transferencias() {
+        $user = session()->get('user');
+        if (!$user) {
+            session()->setFlashData('error', "Cadastre-se primeiro!");
+            $data['cadastro'] = false;
+            return view('cadastro', $data);
+        }
+        
         $Usuario = new UsuarioModel();
         $data['user'] = $Usuario->getData(session()->get('user'));
 
@@ -160,32 +219,58 @@ class Home extends BaseController
     }
 
     public function transferir() {
+        $user = session()->get('user');
+        if (!$user) {
+            session()->setFlashData('error', "Cadastre-se primeiro!");
+            $data['cadastro'] = false;
+            return view('cadastro', $data);
+        }
+        
+        
         $data = $_POST;
         date_default_timezone_set('America/Sao_Paulo'); 
         $data['data'] = date("Y-m-d H:i:s", time());
-
+        
         $Usuario = new UsuarioModel();
         $Extrato = new ExtratoModel();
 
+        $ValorUsuario = $Usuario->getData(session()->get('user'));
+        if ($_POST['valor'] > $ValorUsuario['valor']) {
+            session()->setFlashData('error', "Saldo inválido");
+            return redirect('/');       
+        }
+        
         $pago = $Usuario->getData($data['destino']);
-        $pagante = $Usuario->getData($data['usuario']);
+        if ($pago != null) {
+            $pagante = $Usuario->getData($data['usuario']);
             
-        $data2 = $_POST;
-        $data2['tipo'] .= ' (recebido)';
-        $data2['data'] = $data['data'];
-        $data2['destino'] = $pagante['nome']." (".$data['usuario'].')';
-        $data2['usuario'] = $data['destino'];    
-        $data['destino'] = $pago['nome']." (".$pago['numero'].")";        
-        
-        $Usuario->pagar($data['usuario'], $data['valor'], $pago['numero']);
-        
-        $Extrato->insert($data);
-        $Extrato->insert($data2);
+            $data2 = $_POST;
+            $data2['tipo'] .= ' (recebido)';
+            $data2['data'] = $data['data'];
+            $data2['destino'] = $pagante['nome']." (".$data['usuario'].')';
+            $data2['usuario'] = $data['destino'];    
+            $data['destino'] = $pago['nome']." (".$pago['numero'].")";
+            
+            $Usuario->pagar($data['usuario'], $data['valor'], $pago['numero']);
+            
+            $Extrato->insert($data);
+            $Extrato->insert($data2);
+        } else {
+            session()->setFlashData('error', "O destinatário não existe!");
+        }
+
         
         return redirect('/');
     }
 
     public function poupanca() {
+        $user = session()->get('user');
+        if (!$user) {
+            session()->setFlashData('error', "Cadastre-se primeiro!");
+            $data['cadastro'] = false;
+            return view('cadastro', $data);
+        }
+
         $Usuario = new UsuarioModel();
         $Poupanca = new PoupancaModel();
         
@@ -198,13 +283,32 @@ class Home extends BaseController
     }
 
     public function depositar() {
+        $user = session()->get('user');
+        if (!$user) {
+            session()->setFlashData('error', "Cadastre-se primeiro!");
+            $data['cadastro'] = false;
+            return view('cadastro', $data);
+        }
+
         $Usuario = new UsuarioModel();
         $Poupanca = new PoupancaModel();
-        
+
         if (isset($_POST['sacar']) && $_POST['sacar']) {
+            $ValorPoupanca = $Poupanca->getData(session()->get('user'));
+            if ($_POST['valor'] > $ValorPoupanca['valor']) {
+                session()->setFlashData('error', "Saldo inválido");
+                return redirect('/');       
+            }
+
             $Usuario->alterValue(session()->get('user'), $_POST['valor']);
             $Poupanca->alterValue(session()->get('user'), -1*$_POST['valor']);
         } else {
+            $ValorUsuario = $Usuario->getData(session()->get('user'));
+            if ($_POST['valor'] > $ValorUsuario['valor']) {
+                session()->setFlashData('error', "Saldo inválido");
+                return redirect('/');       
+            }
+
             $Poupanca->alterValue(session()->get('user'), $_POST['valor']);
             $Usuario->alterValue(session()->get('user'), -1*$_POST['valor']);
         }
@@ -212,4 +316,44 @@ class Home extends BaseController
         return redirect('/');
     }
     
+    public function adicao() {
+        $user = session()->get('user');
+        if (!$user) {
+            session()->setFlashData('error', "Cadastre-se primeiro!");
+            $data['cadastro'] = false;
+            return view('cadastro', $data);
+        }
+        
+        $Usuario = new UsuarioModel();
+        $data['user'] = $Usuario->getData(session()->get('user'));
+
+        return view('adicionar',$data);
+    }
+
+    public function adicionar() {
+        $user = session()->get('user');
+        if (!$user) {
+            session()->setFlashData('error', "Cadastre-se primeiro!");
+            $data['cadastro'] = false;
+            return view('cadastro', $data);
+        }
+        
+        $Usuario = new UsuarioModel();
+        $usuario = $Usuario->getData($user);
+        
+        $data = $_POST;
+        date_default_timezone_set('America/Sao_Paulo'); 
+        $data['data'] = date("Y-m-d H:i:s", time());
+        $data['destino'] = $usuario['nome']." (".$data['usuario'].")";
+        
+        $Extrato = new ExtratoModel();
+        
+        $Usuario->pagar(null, $data['valor'], $data['usuario']);
+            
+        $Extrato->insert($data);
+        
+        return redirect('/');
+    }
+
+
 }

@@ -38,11 +38,13 @@ $routes->get('/extrato/(:num)', 'Home::detalhar/$1');
 $routes->get('/pagar', 'Home::pagamentos');
 $routes->get('/transferir', 'Home::transferencias');
 $routes->get('/poupanca', 'Home::poupanca');
+$routes->get('/adicionar', 'Home::adicao');
 
 $routes->post('/', 'Home::cadastrar');
 $routes->post('/pagar', 'Home::pagar');
 $routes->post('/transferir', 'Home::transferir');
 $routes->post('/depositar', 'Home::depositar');
+$routes->post('/adicionar', 'Home::adicionar');
 
 /*
  * --------------------------------------------------------------------

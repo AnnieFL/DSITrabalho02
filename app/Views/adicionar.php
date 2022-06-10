@@ -14,11 +14,11 @@
     <h1 style="font-family: 'Alegreya Sans SC', sans-serif;" class='fixedTopRig'><a class='nonlink' href='/'>Tejas Bank</a></h1>
     <div class='complexcenter center login'>
 
-        <h1>Transferir</h1>
+        <h1>Depositar</h1>
         <?php
-        echo "<h2>Seu saldo - R$".number_format($user['valor'], 2)."</h2>"
+        echo "<h2>Saldo Atual - R$".number_format($user['valor'], 2)."</h2>"
         ?>
-    <form action="/transferir" method='post'>
+    <form action="/adicionar" method='post'>
         <label for="tipo">Tipo</label><br>
         <select name="tipo">
             <option value="Pix">Pix</option>
@@ -26,17 +26,7 @@
             <option value="Debito">Crédito</option>
             <option value="Boleto">Boleto</option>
         </select><br>
-        <label for="destino">Destino</label><br>
-        <select name="destino">
-    <?php
-        for ($i=0; $i<count($users); $i++) {
-            if ($users[$i]['numero'] != $user['numero']) {
-                echo "<option value='".$users[$i]['numero']."'>".$users[$i]['nome']." (".$users[$i]['numero'].")</option>";
-            }
-        }
-        ?>
-        </select><br>
-        <input type="number" name='valor' placeholder='R$0,00' min='0' step='0.01' <?php echo "max =".number_format($user['valor'], 2)?> required><br>
+        <input type="number" name='valor' placeholder='R$0,00' min='0' step='0.01' required><br>
         <textarea name="descricao" cols="25" rows="5" placeholder='Descrição' style="resize: none;" required></textarea><br>
         <input type="hidden" name='usuario' <?php echo "value='".$user['numero']."'" ?>>
         <input class='button3' type="submit">

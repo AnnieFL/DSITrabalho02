@@ -27,7 +27,7 @@ class usuarioModel extends Model {
         return $this->update();
     }
 
-    public function pagar($pagante, $valor, $pago = null) {
+    public function pagar($pagante = null, $valor, $pago = null) {
         if ($pago != null) {
             $result = $this->getData($pago);
             $result['valor'] += $valor;
@@ -36,12 +36,14 @@ class usuarioModel extends Model {
             $this->where('numero', $pago);
             $this->update();
         }
-        $result = $this->getData($pagante);
-        $result['valor'] -= $valor;
-
-        $this->set('valor', $result['valor']);
-        $this->where('numero', $pagante);
-        return $this->update();
+        if ($pagante != null) {
+            $result = $this->getData($pagante);
+            $result['valor'] -= $valor;
+            
+            $this->set('valor', $result['valor']);
+            $this->where('numero', $pagante);
+            return $this->update();
+        }
     }
 
     public function alterValue($usuario, $valor) {
